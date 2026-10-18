@@ -1,5 +1,11 @@
 # Food & Cosmetics · Remote MCP and reports
 
+**Mercato italiano:** catalogo pubblico parziale di alimenti e cosmetici reperibili
+nel contesto italiano, non catalogo globale o completo né attestazione di origine
+italiana. La fonte dei prodotti è l'istantanea del 18 ottobre 2026 identificata
+dal [manifest](../manifest.json), non un database pubblico anonimo o un registro
+ufficiale. Risposte e interfaccia sono in italiano.
+
 Live endpoint: [HTTPS MCP](https://food-and-cosmetics-mcp.food-and-cosmetics-mcp.workers.dev/mcp). [Health](https://food-and-cosmetics-mcp.food-and-cosmetics-mcp.workers.dev/health).
 The personal ChatGPT connection is named **Food & Cosmetics**. It uses this remote URL, not the previous local tunnel.
 
@@ -50,8 +56,10 @@ Credentials belong in the local CLI credential store, never in this repository.
 - `get_scoring_breakdown(barcode, kind)` — distinguishes reported grade from
   dimensions that cannot be recomputed; no invented component values.
 - `compare_products(barcodes, kind)` — two to five products.
-- `explain_ingredient(ingredient)` — E-code names/functions from the separately
-  attributed Open Food Facts taxonomy, or exact INCI/name/ID from the snapshot.
+- `explain_ingredient(ingredient)` — E-code names/functions, original source
+  assessments/bibliography, and selected independently checked primary-source
+  summaries, ADIs, studies and limits. Exact INCI identity for cosmetics remains
+  separate; food toxicology is not applied to cosmetic use.
 - `get_product_sources(barcode, kind)` — dates, record ID, hashes and public URLs.
 - `list_categories(query, kind)` — source category names and IDs, at most 40.
 - `rank_category(category, kind, order, limit)` — best/worst within the snapshot.
@@ -61,6 +69,14 @@ Credentials belong in the local CLI credential store, never in this repository.
   product cards, comparison, alternatives or ranking, fetched by the server.
 
 `kind` is `food` (default) or `cosmetics`; `order` is `best` or `worst`.
+Ranking, alternatives and graphical reports accept `additive_filter`:
+`any`, `none_listed` or `no_flagged`, and `exclude_additives` (up to 20 exact
+E-codes). Filtering uses every category member before sorting, not a truncated
+top 100. Restrictive filters exclude missing inventories and unresolved codes.
+Empty lists are allowed only as unverified source inventories. `no_flagged`
+excludes source flags OR curated attention flags; it is a documented selection
+heuristic, not a claim of no health risk. These filters reject cosmetics.
+[Italian methodology, audit and examples](../ADDITIVES.md).
 Use category IDs returned by `list_categories`, not a guessed translation.
 All tools are read-only. Invalid GTINs are rejected before network access.
 Barcode strings retain leading zeros. Not found and unavailable are distinct
@@ -78,6 +94,9 @@ The same interface can be inspected at `/report?preview=1&barcodes=GTIN`.
 For comparisons use comma-separated codes. For a ranking use
 `/report?preview=1&view=ranking&category=CATEGORY_ID&kind=food&order=best`.
 `/api/report` is the public read-only JSON companion for that preview.
+Preview filters use `&additive_filter=none_listed` or `no_flagged`, with optional
+`&exclude_additives=E951,E250`. Reports include expandable additive dossiers and
+distinct scientific/source sections. Knowledge version: `additive-knowledge/1.0.0`.
 The preview is not proof of ChatGPT rendering: the ChatGPT client must support
 MCP Apps and the connection must point to the deployed endpoint.
 

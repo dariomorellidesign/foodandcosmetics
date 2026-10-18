@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Food & Cosmetics static product data",
-    "version": "1.1",
-    "description": "Static product JSON, category indexes and source-reported ratings. Remote MCP and the visual report are documented separately in plugin/README.md. Native nutrient units/bases remain unverified."
+    "version": "1.2",
+    "description": "Public partial snapshot of food and cosmetics for the Italian market, not a complete or official register. Source-reported ratings, additive dossiers and whole-category candidate indexes for documented inventory filters. Native nutrient units remain unverified."
   },
   "servers": [
     {
@@ -184,6 +184,28 @@
           },
           "404": {
             "description": "Category not in snapshot"
+          }
+        }
+      }
+    },
+    "/reference/additive-evidence.json": {
+      "get": {
+        "operationId": "getSelectedAdditiveEvidence",
+        "summary": "Versioned selected primary-source food additive summaries; no individual risk determination",
+        "responses": {
+          "200": {
+            "description": "Seven independently checked summaries with scope, dates, ADIs, evidence and limitations"
+          }
+        }
+      }
+    },
+    "/reference/additive-source-assessments.json": {
+      "get": {
+        "operationId": "getOriginalAdditiveReference",
+        "summary": "683 original additive records; unvalidated source claims, bibliographies, provenance and join audit",
+        "responses": {
+          "200": {
+            "description": "Original claims are distinct from independent summaries; numeric danger values are not mapped"
           }
         }
       }

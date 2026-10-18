@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.1",
+  "schema_version": "1.2",
   "name": "Food & Cosmetics",
   "site_url": "https://dariomorellidesign.github.io/foodandcosmetics",
   "repository_url": "https://github.com/dariomorellidesign/foodandcosmetics",
@@ -41,5 +41,10 @@
   "rights": "Third-party data; no new open-data license is granted by this repository",
   "image_base_url": "https://dariomorellidesign.github.io/foodandcosmetics-images/images",
   "mcp_url": "https://food-and-cosmetics-mcp.food-and-cosmetics-mcp.workers.dev/mcp",
-  "report_base_url": "https://food-and-cosmetics-mcp.food-and-cosmetics-mcp.workers.dev/report"
+  "report_base_url": "https://food-and-cosmetics-mcp.food-and-cosmetics-mcp.workers.dev/report",
+  "market": "IT",
+  "language": "it",
+  "coverage": "partial_snapshot_not_a_complete_inventory_of_the_Italian_market",
+  "description": "Catalogo pubblico parziale di alimenti e cosmetici del mercato italiano: barcode, fotografie, confronti, classifiche e riferimenti sugli additivi.",
+  "additive_knowledge_version": "additive-knowledge/1.0.0"
 }

@@ -25,6 +25,9 @@ def category_index(kind, category, products):
         "tie_break": "barcode_ascending",
         "total_products": len(products), "eligible_products": len(eligible),
         "excluded_missing_or_unusable_rating": len(products) - len(eligible),
+        "candidates_schema": "additive-candidates/1.0.0",
+        "candidates_columns": ["barcode", "rating", "additives"],
+        "candidates": [[p["barcode"], p["rating"], p.get("additives")] for p in sorted(products, key=lambda p: p["barcode"])],
         "best": sorted(eligible, key=lambda p: (-p["rating"], p["barcode"]))[:LIMIT],
         "worst": sorted(eligible, key=lambda p: (p["rating"], p["barcode"]))[:LIMIT],
     }

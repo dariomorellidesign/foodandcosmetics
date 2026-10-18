@@ -66,7 +66,7 @@ def page(title, body, base, canonical, description="", structured=None, json_url
     alternate = (
         f'<link rel="alternate" type="application/json" href="{esc(json_url)}">' if json_url else ""
     )
-    return f'''<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc(title)} · Food &amp; Cosmetics</title><meta name="description" content="{esc(description)}"><meta name="robots" content="index,follow"><link rel="canonical" href="{esc(base + "/" + canonical)}">{alternate}<link rel="stylesheet" href="{esc(base)}/style.css">{ld}</head><body><header><a href="{esc(base)}/">Food &amp; Cosmetics</a><p class="muted">Dati di prodotto · HTML e JSON</p></header><main>{body}</main><footer><a href="{esc(base)}/about.html">Provenienza e limiti</a> · <a href="{esc(base)}/manifest.json">Manifest</a> · <a href="{esc(base)}/llms.txt">Accesso per AI</a></footer></body></html>'''
+    return f'''<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc(title)} · Food &amp; Cosmetics</title><meta name="description" content="{esc(description)}"><meta name="robots" content="index,follow"><link rel="canonical" href="{esc(base + "/" + canonical)}">{alternate}<link rel="stylesheet" href="{esc(base)}/style.css">{ld}</head><body><header><a href="{esc(base)}/">Food &amp; Cosmetics</a><p class="muted">Mercato italiano · HTML e JSON</p></header><main>{body}</main><footer><a href="{esc(base)}/about.html">Provenienza e limiti</a> · <a href="{esc(base)}/manifest.json">Manifest</a> · <a href="{esc(base)}/llms.txt">Accesso per AI</a></footer></body></html>'''
 
 
 def projection(record, manifest, ingredients, images=None):
@@ -228,6 +228,7 @@ def build(data_dir, output, manifest_path=ROOT / "manifest.json"):
                         "rating": eligible_grade(record["data"]),
                         "image_url": item.get("image", {}).get("url"),
                         "url": base + "/" + hp,
+                        "additives": record["data"].get("additives") if kind == "food" else None,
                     })
                 totals[kind] += 1
                 if totals[kind] % 10000 == 0:
@@ -245,6 +246,39 @@ def build(data_dir, output, manifest_path=ROOT / "manifest.json"):
     write(output, "indexes/categories.json", encode({"schema_version": "1.0", "categories": categories}))
     write(output, "reference/ingredients.json", encode(ingredients))
     shutil.copyfile(ROOT / "reference/additives.json", output / "reference/additives.json")
+    for filename in ("additive-source-assessments.json", "additive-evidence.json"):
+        shutil.copyfile(ROOT / "reference" / filename, output / "reference" / filename)
+    source_additives = json.loads((ROOT / "reference/additive-source-assessments.json").read_text(encoding="utf-8"))
+    evidence = json.loads((ROOT / "reference/additive-evidence.json").read_text(encoding="utf-8"))
+    additive_links = []
+    for code, entry in source_additives["entries"].items():
+        review = evidence["entries"].get(code)
+        name = (review or {}).get("name_it") or entry["names"].get("it") or entry["names"].get("en") or code
+        body = f'<h1>{esc(code)} · {esc(name)}</h1><p>Mercato alimentare italiano · scheda additivo, non valutazione dei cosmetici.</p>'
+        if review:
+            body += '<h2>Valutazione verificata su fonti primarie</h2><p>' + esc(review["summary_it"]) + '</p><p>Verifica: ' + evidence["reviewed_at"] + '; selezione di fonti, non revisione sistematica esaustiva.</p>'
+            if review.get("adi"):
+                adi = review["adi"]
+                body += f'<p>DGA: {adi["value"]} {esc(adi["unit"])}; espressa come {esc(adi["expressed_as"])}. Ambito: {esc(adi["scope"])}</p>'
+            body += '<ul>' + ''.join(f'<li><a href="{esc(s["url"])}" rel="noreferrer">{esc(s["title"])}</a> · {esc(s["authority"])} · {esc(s["date"])}</li>' for s in review["sources"]) + '</ul>'
+        else:
+            body += '<p>Nessuna scheda scientifica indipendente ancora verificata per questo codice. Non significa assenza di rischi.</p>'
+        raw = entry["source_assessment"]
+        body += '<h2>Segnalazioni della fonte originale, non validate</h2><p>Le seguenti voci sono giudizi della fonte, non effetti clinici accertati. Non equivalgono a conclusioni EFSA/IARC. I testi descrittivi non sono disponibili: le chiavi di traduzione non sono descrizioni.</p><ul>' + ''.join('<li>' + esc(x) + '</li>' for x in raw["riskCharacterization"]) + '</ul>'
+        if not raw["riskCharacterization"]:
+            body += '<p>Nessuna segnalazione nel riferimento disponibile; non è una certificazione di sicurezza.</p>'
+        body += '<details><summary>Bibliografia riportata dalla fonte (non verificata singolarmente)</summary><ul>'
+        for ref in raw["sources"]:
+            url = ref.get("url")
+            label = esc(ref.get("label"))
+            body += '<li>' + (f'<a href="{esc(url)}" rel="noreferrer">{label}</a>' if url and url.startswith(("https://", "http://")) else label + ' (URL mancante)') + f' · {esc(ref.get("year"))}</li>'
+        body += '</ul></details><p>Dose, esposizione e rischio del singolo prodotto non disponibili.</p><p><a href="../reference/additive-source-assessments.json">Riferimenti originali e audit JSON</a> · <a href="../reference/additive-evidence.json">Schede verificate e metodologia JSON</a></p>'
+        route = f"additives/{code}.html"
+        write(output, route, page(code + " · " + name, body, base, route))
+        urls.append(base + "/" + route)
+        additive_links.append(f'<li><a href="{code}.html">{esc(code)} · {esc(name)}</a></li>')
+    write(output, "additives/index.html", page("Archivio additivi", '<h1>Archivio additivi alimentari</h1><p>683 riferimenti della fonte; 7 schede verificate su fonti primarie. Segnalazioni, pericoli ed esposizione restano distinti.</p><ul>' + ''.join(additive_links) + '</ul>', base, "additives/index.html"))
+    urls.append(base + "/additives/index.html")
     for kind, items in listings.items():
         items.sort()
         for offset in range(0, len(items), 1000):
@@ -270,7 +304,7 @@ def build(data_dir, output, manifest_path=ROOT / "manifest.json"):
             )
             urls.append(base + "/" + route)
     search = """<h2>Cerca per codice a barre</h2><form id="lookup"><label>Tipo <select id="kind"><option value="food">Alimento</option><option value="cosmetics">Cosmetico</option></select></label><br><label>Barcode <input id="barcode" inputmode="numeric" pattern="[0-9]{8,14}" required placeholder="Inserisci il codice a barre"></label> <button>Apri scheda</button><p id="error" role="status"></p></form><script>document.getElementById('lookup').onsubmit=function(e){e.preventDefault();const c=document.getElementById('barcode').value.trim(),k=document.getElementById('kind').value;if(![8,12,13,14].includes(c.length)||!/^[0-9]+$/.test(c)){document.getElementById('error').textContent='Inserisci un GTIN di 8, 12, 13 o 14 cifre.';return;}location.href='products/'+k+'/'+c.slice(0,3)+'/'+c.slice(3,5)+'/'+c+'.html';};</script>"""
-    home = f'<h1>Dati leggibili, prodotto per prodotto</h1><p>{totals["food"]:,} alimenti e {totals["cosmetics"]:,} cosmetici con GTIN valido. Schede HTML leggibili senza JavaScript e JSON direttamente accessibili.</p>{search}<nav><a href="catalog/food/1.html">Sfoglia alimenti</a><a href="catalog/cosmetics/1.html">Sfoglia cosmetici</a><a href="{manifest["release_url"]}">Download SQLite e JSONL non compressi</a></nav><p class="note">Istantanea della fonte del {manifest["snapshot_date"]}. Dati non verificati sulla confezione attuale; nessun nuovo punteggio sanitario calcolato. Le unità nutrizionali native richiedono verifica. I dati mancanti restano mancanti.</p>'
+    home = f'<h1>Alimenti e cosmetici del mercato italiano</h1><p>{totals["food"]:,} alimenti e {totals["cosmetics"]:,} cosmetici con GTIN valido. Catalogo parziale: non tutti i prodotti in commercio. Schede HTML leggibili senza JavaScript e JSON direttamente accessibili.</p>{search}<nav><a href="catalog/food/1.html">Sfoglia alimenti</a><a href="catalog/cosmetics/1.html">Sfoglia cosmetici</a><a href="additives/index.html">Archivio additivi e studi</a><a href="{manifest["release_url"]}">Download SQLite e JSONL non compressi</a></nav><p class="note">Istantanea della fonte del {manifest["snapshot_date"]}. Dati non verificati sulla confezione attuale; nessun nuovo punteggio sanitario calcolato. Le unità nutrizionali native richiedono verifica. I dati mancanti restano mancanti.</p>'
     write(
         output,
         "index.html",
@@ -279,10 +313,10 @@ def build(data_dir, output, manifest_path=ROOT / "manifest.json"):
             home,
             base,
             "",
-            "Schede alimenti e cosmetici per barcode, dati HTML e JSON, fonti e limiti espliciti.",
+            "Catalogo parziale del mercato italiano: alimenti e cosmetici per barcode, HTML e JSON, fonti e limiti espliciti.",
         ),
     )
-    about = "<h1>Provenienza e limiti</h1><p>Export dell’istantanea offline italiana fornito dal proprietario del repository, acquisito il 18 ottobre 2026. Progetto indipendente. Nomi, valutazioni e dati originali appartengono alle rispettive fonti; il sito non attribuisce una nuova licenza aperta ai dati di terzi.</p><p>Le schede HTML/JSON comprendono i record con GTIN valido. Le righe escluse per barcode mancante/non valido restano negli archivi originali della release. Le foto disponibili sono collegate tramite l’identificativo originale e ospitate separatamente; non certificano la confezione attuale. L’export alimentare non contiene il testo integrale degli ingredienti; gli elenchi vuoti non dimostrano assenza. I valori nutrizionali restano nei campi e nelle unità native non validate, senza conversioni. I voti sono riportati dalla fonte e non ricalcolati. INCI e nomi sono collegati tramite gli identificativi originali.</p><p>La data della scheda può essere precedente alla data dell’istantanea. I testi possono contenere caratteri sostitutivi già presenti nella fonte: non vengono inventate correzioni. Questo servizio statico non è un MCP remoto e non offre un motore di ricerca per nome.</p>"
+    about = "<h1>Provenienza e limiti</h1><p>Export dell’istantanea offline italiana fornito dal proprietario del repository, acquisito il 18 ottobre 2026. Progetto indipendente. Nomi, valutazioni e dati originali appartengono alle rispettive fonti; il sito non attribuisce una nuova licenza aperta ai dati di terzi.</p><p>Le schede HTML/JSON comprendono i record con GTIN valido. Le righe escluse per barcode mancante/non valido restano negli archivi originali della release. Le foto disponibili sono collegate tramite l’identificativo originale e ospitate separatamente; non certificano la confezione attuale. L’export alimentare non contiene il testo integrale degli ingredienti; gli elenchi vuoti non dimostrano assenza. I valori nutrizionali restano nei campi e nelle unità native non validate, senza conversioni. I voti sono riportati dalla fonte e non ricalcolati. INCI e nomi sono collegati tramite gli identificativi originali.</p><p>La data della scheda può essere precedente alla data dell’istantanea. I testi possono contenere caratteri sostitutivi già presenti nella fonte: non vengono inventate correzioni. Catalogo del mercato italiano, non attestazione di origine italiana dei prodotti. Il servizio MCP remoto consulta questi dati online e offre confronti e filtri su intere categorie. Il sito non offre ricerca per nome. Le schede additivi distinguono segnalazioni originali non validate e sette approfondimenti verificati su fonti primarie.</p>"
     write(output, "about.html", page("Provenienza e limiti", about, base, "about.html"))
     write(
         output,
@@ -319,7 +353,7 @@ def build(data_dir, output, manifest_path=ROOT / "manifest.json"):
     write(
         output,
         "llms.txt",
-        f"# Food & Cosmetics\n\nPublic static product reference snapshot.\n\n- HTML: {base}/products/{{type}}/{{barcode[0:3]}}/{{barcode[3:5]}}/{{barcode}}.html\n- JSON: {base}/data/{{type}}/{{barcode[0:3]}}/{{barcode[3:5]}}/{{barcode}}.json\n- Types: food, cosmetics. Preserve barcode strings and leading zeros.\n- OpenAPI: {base}/openapi.json\n- Manifest: {base}/manifest.json\n- Source-native units/bases unverified. No new risk score. Missing values are not zero or proof of absence. Source-reported grades are not recomputed.\n- Full noncompressed datasets: {manifest['release_url']}\n",
+        f"# Food & Cosmetics\n\nPublic partial catalog for the ITALIAN food and cosmetics market (IT). Not a complete/global product register. Source: owner-supplied offline snapshot dated 2026-10-18; originals and SHA-256 in manifest.\n\n- HTML: {base}/products/{{type}}/{{barcode[0:3]}}/{{barcode[3:5]}}/{{barcode}}.html\n- JSON: {base}/data/{{type}}/{{barcode[0:3]}}/{{barcode[3:5]}}/{{barcode}}.json\n- Additive dossiers: {base}/additives/index.html; selected primary-source summaries: {base}/reference/additive-evidence.json; original unvalidated source assessments: {base}/reference/additive-source-assessments.json.\n- MCP category filters: none_listed means empty unverified inventory; no_flagged means no flags in available references, never risk-free; exclude_additives accepts exact E-codes. Unknown inventories/codes excluded; full category filtered before sorting.\n- Types: food, cosmetics. Preserve barcode strings and leading zeros.\n- OpenAPI: {base}/openapi.json\n- Manifest: {base}/manifest.json\n- Source-native units/bases unverified. No new risk score. Missing values are not zero or proof of absence. Source-reported grades are not recomputed.\n- Full noncompressed datasets: {manifest['release_url']}\n",
     )
     write(output, ".nojekyll", "")
     output.mkdir(parents=True, exist_ok=True)
@@ -331,6 +365,8 @@ def build(data_dir, output, manifest_path=ROOT / "manifest.json"):
         "excluded_from_barcode_pages": excluded,
         "html_urls_in_sitemaps": len(urls),
         "source_assets_sha256_verified": True,
+        "additive_source_entries": len(source_additives["entries"]),
+        "independently_reviewed_additives": len(evidence["entries"]),
     }
     if totals != manifest["barcode_page_counts"]:
         raise ValueError("Published record counts differ from manifest")

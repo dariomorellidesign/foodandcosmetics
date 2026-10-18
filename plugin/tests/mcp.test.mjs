@@ -13,6 +13,11 @@ test('real MCP transport initializes and advertises all read-only tools and UI r
   assert.equal(init.serverInfo.name,'Food & Cosmetics');
   const {tools}=await rpc('tools/list');assert.equal(tools.length,10);assert(tools.every(t=>t.annotations.readOnlyHint));
   const render=tools.find(t=>t.name==='render_product_report');assert.equal(render._meta.ui.resourceUri,'ui://food-and-cosmetics/report-v1.html');
+  for(const name of ['rank_category','find_better_alternatives','render_product_report']){
+    const schema=tools.find(t=>t.name===name).inputSchema.properties;
+    assert.deepEqual(schema.additive_filter.enum,['any','none_listed','no_flagged']);assert.equal(schema.exclude_additives.maxItems,20);
+  }
+  assert(init.instructions.includes('mercato italiano'));
   const resource=await rpc('resources/read',{uri:render._meta.ui.resourceUri});
   assert.equal(resource.contents[0].mimeType,'text/html;profile=mcp-app');assert(resource.contents[0].text.includes('Food & Cosmetics'));
   assert.deepEqual(resource.contents[0]._meta.ui.csp.connectDomains,[]);
