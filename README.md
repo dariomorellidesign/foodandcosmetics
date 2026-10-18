@@ -44,7 +44,3 @@ python scripts/build_site.py --data-dir .build-data --output _site
 ```
 
 Solo libreria standard Python. Il generatore verifica hash, GTIN e unicità degli URL. GitHub Actions pubblica `_site` da `main`, sui push o con avvio manuale, dopo che i file della release indicata nel manifest sono disponibili. Nessuna credenziale, configurazione privata o backup dell'applicazione è incluso.
-
-## Attribuzione
-
-Fonte: Yuka e i rispettivi titolari dei contenuti. Non viene attribuita una nuova licenza aperta ai dati di terzi. Questo repository non rappresenta Yuka e non concede diritti di riutilizzo sui suoi dati, testi, voti o immagini. [Condizioni della fonte](https://help.yuka.io/l/fr/article/pyaesjv84d).
