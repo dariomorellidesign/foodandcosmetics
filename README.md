@@ -1,6 +1,6 @@
 # Food & Cosmetics
 
-Catalogo pubblico per barcode, con pagine **HTML leggibili senza JavaScript** e dati **JSON direttamente accessibili**. Fonte: istantanea offline italiana fornita dal proprietario del repository; progetto indipendente, non affiliato a Yuka.
+Catalogo pubblico per barcode, con pagine **HTML leggibili senza JavaScript** e dati **JSON direttamente accessibili**. Fonte: istantanea offline italiana fornita dal proprietario del repository; progetto indipendente.
 
 - [Apri il sito](https://dariomorellidesign.github.io/foodandcosmetics/)
 - [Scarica SQLite e JSONL originali, non compressi](https://github.com/dariomorellidesign/foodandcosmetics/releases/tag/v2026.10.18)
