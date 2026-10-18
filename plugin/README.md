@@ -1,5 +1,9 @@
 # Food & Cosmetics · Remote MCP and reports
 
+Live endpoint: [HTTPS MCP](https://food-and-cosmetics-mcp.food-and-cosmetics-mcp.workers.dev/mcp). [Health](https://food-and-cosmetics-mcp.food-and-cosmetics-mcp.workers.dev/health).
+The personal ChatGPT connection is named **Food & Cosmetics**. It uses this remote URL, not the previous local tunnel.
+
+
 Small, read-only Cloudflare Worker that reads the public GitHub Pages catalog.
 It has no dependency on a local computer, PostgreSQL, an OpenAI API key or the
 private backend. TypeScript is used only for this stateless hosting adapter and
@@ -25,7 +29,7 @@ select arbitrary hosts or fall back to the private database.
 For deployment, sign in to a free Cloudflare account:
 
 ```sh
-pnpm exec wrangler login --scopes account:read user:read workers:write
+pnpm exec wrangler login --scopes account:read user:read workers_scripts:write
 pnpm deploy
 ```
 

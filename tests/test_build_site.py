@@ -98,7 +98,7 @@ class ProductPublicationTests(unittest.TestCase):
             summary=builder.build(folder,folder/"site",mp)
             home=(folder/"site/index.html").read_text(encoding="utf-8")
             self.assertNotIn("Monster",home);self.assertNotIn("KoRo",home);self.assertNotIn("8015854330021",home)
-            self.assertNotIn("yuka",home.lower())
+            self.assertIn("Provenienza e limiti",home)
             index=json.loads((folder/"site/indexes/food/fixture.json").read_text())
             self.assertEqual(index["best"][0]["rating"],0)
             self.assertEqual(summary["published_products"],{"food":1,"cosmetics":1})

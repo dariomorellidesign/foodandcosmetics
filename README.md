@@ -2,6 +2,7 @@
 
 Catalogo pubblico per barcode, con pagine **HTML leggibili senza JavaScript** e dati **JSON direttamente accessibili**. Fonte: istantanea offline italiana fornita dal proprietario del repository; progetto indipendente.
 
+- [Servizio MCP remoto](https://food-and-cosmetics-mcp.food-and-cosmetics-mcp.workers.dev/mcp) · [Stato del servizio](https://food-and-cosmetics-mcp.food-and-cosmetics-mcp.workers.dev/health)
 - [Apri il sito](https://dariomorellidesign.github.io/foodandcosmetics/)
 - [Scarica SQLite e JSONL originali, non compressi](https://github.com/dariomorellidesign/foodandcosmetics/releases/tag/v2026.10.18)
 - [Manifest e hash](manifest.json) · [Schema SQLite](schema.sql) · [Note e provenienza](DATA_NOTES.md)
@@ -47,3 +48,5 @@ Solo libreria standard Python. Il generatore verifica hash, GTIN e unicità degl
 ## Classifiche e report
 
 Gli indici `/indexes/categories.json` e `/indexes/{type}/{category}.json` espongono le categorie presenti e i primi 100 voti per ordine. La regola `source-rating/1.0.0` ordina il voto riportato, risolve le parità per barcode e conta gli esclusi; non ricalcola il voto e non certifica il suo algoritmo. Le alternative usano la stessa categoria esatta e un voto strettamente maggiore: è una nostra euristica di similarità, non una verifica di allergeni o ingredienti.
+
+Per collegare un client MCP usare l’URL HTTPS sopra, senza autenticazione. Il collegamento personale ChatGPT si chiama **Food & Cosmetics**. Ogni scheda del catalogo offre anche il collegamento al report grafico. Servizio e fotografie sono online: il computer di sviluppo può essere spento. Nessuna chiamata a modelli o API di inferenza OpenAI viene eseguita da questo servizio. Restano le quote del piano gratuito Workers e di GitHub Pages.

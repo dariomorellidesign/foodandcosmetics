@@ -39,5 +39,7 @@
   "nutrition_units": "source-native, not independently verified",
   "ratings": "reported by source, not recomputed",
   "rights": "Third-party data; no new open-data license is granted by this repository",
-  "image_base_url": "https://dariomorellidesign.github.io/foodandcosmetics-images/images"
+  "image_base_url": "https://dariomorellidesign.github.io/foodandcosmetics-images/images",
+  "mcp_url": "https://food-and-cosmetics-mcp.food-and-cosmetics-mcp.workers.dev/mcp",
+  "report_base_url": "https://food-and-cosmetics-mcp.food-and-cosmetics-mcp.workers.dev/report"
 }

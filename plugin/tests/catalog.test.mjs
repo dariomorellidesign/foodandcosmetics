@@ -22,6 +22,14 @@ test('identity mismatch and source failure do not become invented products',asyn
   await assert.rejects(mock({[path]:{...product,barcode:'wrong'}}).catalog.product(code),{code:'SOURCE_INVALID'});
   const catalog=new Catalog(DEFAULT_CATALOG,async()=>{throw Error('offline');});await assert.rejects(catalog.product(code),{code:'SOURCE_UNAVAILABLE'});
 });
+test('edge-compatible manual redirects never follow a different host',async()=>{
+  let calls=0;
+  const catalog=new Catalog(DEFAULT_CATALOG,async(url,options)=>{
+    calls++;assert.equal(options.redirect,'manual');assert(url.startsWith(DEFAULT_CATALOG));
+    return new Response('',{status:302,headers:{location:'http://localhost/private'}});
+  });
+  await assert.rejects(catalog.product(code),{code:'SOURCE_UNAVAILABLE'});assert.equal(calls,1);
+});
 test('missing is not zero; source grade is never a reconstructed breakdown',async()=>{
   assert.equal(grade({...product,data:{grade:0}}),0);assert.equal(grade({...product,data:{grade:null}}),null);
   assert.equal(grade({...product,data:{grade:80,gradeForbidden:true}}),null);assert.equal(grade({...product,data:{grade:true}}),null);

@@ -36,7 +36,7 @@ export class Catalog {
   }
   async json(path: string): Promise<any> {
     let response: Response;
-    try { response=await this.request(`${this.base}/${path}`,{signal:AbortSignal.timeout(15000),redirect:'error'}); }
+    try { const request=this.request; response=await request(`${this.base}/${path}`,{signal:AbortSignal.timeout(15000),redirect:'manual'}); }
     catch { throw new CatalogError('SOURCE_UNAVAILABLE','Catalogo temporaneamente non raggiungibile. Riprova più tardi.'); }
     if(response.status===404) throw new CatalogError('NOT_FOUND','Dato non presente in questa istantanea.');
     if(!response.ok) throw new CatalogError('SOURCE_UNAVAILABLE',`Il catalogo risponde con stato ${response.status}.`);
