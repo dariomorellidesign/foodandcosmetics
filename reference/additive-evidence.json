@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "version": "additive-evidence/1.0.0",
+  "reviewed_at": "2026-10-18",
+  "jurisdiction": "EU/Italy food uses only",
+  "scope": "Selected primary sources, not an exhaustive systematic review or a cosmetic safety assessment",
+  "product_risk": "not_assessable_without_concentration_consumption_and_personal_context",
+  "entries": {
+    "E171": {
+      "name_it": "Biossido di titanio",
+      "status": "eu_food_authorisation_withdrawn",
+      "attention_flag": true,
+      "summary_it": "L'UE ha ritirato l'autorizzazione alimentare nel 2022 dopo che EFSA non ha potuto escludere la genotossicità. Una presenza nel catalogo può indicare una scheda storica: verificare la confezione attuale. Questa valutazione non riguarda cosmetici o medicinali.",
+      "hazard": {"description_it": "Preoccupazione per genotossicità non esclusa; non prova un danno nel singolo consumatore.", "evidence_strength": "regulatory_conclusion_with_uncertainty"},
+      "adi": null,
+      "sources": [{"title": "Regolamento (UE) 2022/63", "authority": "European Commission", "date": "2022-01-14", "type": "regulation", "url": "https://eur-lex.europa.eu/legal-content/IT/ALL/?uri=CELEX%3A32022R0063"}]
+    },
+    "E202": {
+      "name_it": "Sorbato di potassio",
+      "status": "group_adi_established",
+      "attention_flag": false,
+      "summary_it": "EFSA ha stabilito nel 2019 una DGA di gruppo per E200 ed E202 pari a 11 mg di acido sorbico/kg di peso corporeo al giorno. La quantità di sorbato nel prodotto non è nota: non è possibile stimare l'esposizione personale. Le segnalazioni del database originale restano distinte da questa conclusione ufficiale.",
+      "hazard": {"description_it": "La DGA deriva da dati tossicologici e fattori di incertezza; non è una soglia per singola porzione.", "evidence_strength": "efsa_risk_assessment"},
+      "adi": {"value": 11, "unit": "mg/kg body weight/day", "expressed_as": "sorbic acid", "scope": "group E200 + E202"},
+      "sources": [{"title": "Follow-up of the re-evaluation of E200 and E202", "authority": "EFSA", "date": "2019-03-01", "type": "risk_assessment", "url": "https://doi.org/10.2903/j.efsa.2019.5625"}]
+    },
+    "E250": {
+      "name_it": "Nitrito di sodio",
+      "status": "adi_and_exposure_concerns",
+      "attention_flag": true,
+      "summary_it": "EFSA ha fissato per i nitriti una DGA di 0,07 mg/kg di peso corporeo al giorno. Contano esposizione totale e possibile formazione di nitrosammine; la sola presenza di E250 non quantifica questi rischi. L'analisi del 2017 segnalava possibili superamenti nei bambini molto esposti.",
+      "hazard": {"description_it": "Effetti sul sangue e formazione di nitrosammine dipendono da dose e condizioni; non attribuiamo al singolo additivo una classificazione IARC generica.", "evidence_strength": "efsa_risk_assessment"},
+      "adi": {"value": 0.07, "unit": "mg/kg body weight/day", "expressed_as": "nitrite ion", "scope": "nitrites, total dietary exposure"},
+      "sources": [{"title": "EFSA confirms safe levels for nitrites and nitrates added to food", "authority": "EFSA", "date": "2017-06-15", "type": "risk_assessment_summary", "url": "https://www.efsa.europa.eu/en/press/news/170615"}]
+    },
+    "E450": {
+      "name_it": "Difosfati",
+      "status": "group_adi_vulnerable_population",
+      "attention_flag": true,
+      "summary_it": "EFSA ha definito una DGA di gruppo di 40 mg di fosforo/kg di peso corporeo al giorno, considerando tutte le fonti alimentari. Non si applica a persone con riduzione moderata o grave della funzione renale. Non equivale a 40 mg di E450 e non permette di valutare questo prodotto senza le quantità.",
+      "hazard": {"description_it": "Apporti elevati di fosfati possono incidere sulla funzione renale; le condizioni individuali sono rilevanti.", "evidence_strength": "efsa_risk_assessment"},
+      "adi": {"value": 40, "unit": "mg/kg body weight/day", "expressed_as": "phosphorus", "scope": "phosphates from all dietary sources; not applicable to moderate/severe kidney impairment"},
+      "sources": [{"title": "EFSA issues new advice on phosphates", "authority": "EFSA", "date": "2019-06-12", "type": "risk_assessment_summary", "url": "https://www.efsa.europa.eu/en/press/news/190612"}]
+    },
+    "E466": {
+      "name_it": "Carbossimetilcellulosa sodica (CMC)",
+      "status": "evidence_gaps_and_limited_human_study",
+      "attention_flag": true,
+      "summary_it": "EFSA nel 2022 ha confermato dati insufficienti per alcune formule a fini medici per lattanti e bambini; non è un divieto generale. Un piccolo studio controllato su adulti ha osservato cambiamenti del microbiota e fastidio addominale, senza dimostrare malattie croniche o il rischio alle dosi di un prodotto commerciale.",
+      "hazard": {"description_it": "Segnali sul microbiota; conseguenze cliniche a lungo termine e trasferibilità alle esposizioni abituali non stabilite da questo studio.", "evidence_strength": "small_short_term_human_trial_and_population_specific_data_gaps"},
+      "adi": null,
+      "studies": [{"design": "double_blind_controlled_feeding", "participants": 16, "duration_days": 11, "dose": "15 g CMC/day in 7 adults; 9 controls", "limitations_it": "Campione piccolo, durata breve, dose sperimentale; nessuna dimostrazione di causalità per tumori o malattie croniche."}],
+      "sources": [
+        {"title": "Follow-up re-evaluation of E466, including infants", "authority": "EFSA", "date": "2022-12-09", "type": "risk_assessment", "url": "https://doi.org/10.2903/j.efsa.2022.7665"},
+        {"title": "Randomized Controlled-Feeding Study of Dietary Emulsifier Carboxymethylcellulose", "authority": "Chassaing et al., Gastroenterology", "date": "2022-03", "type": "human_intervention", "url": "https://pubmed.ncbi.nlm.nih.gov/34774538/"}
+      ]
+    },
+    "E471": {
+      "name_it": "Mono e digliceridi degli acidi grassi",
+      "status": "no_safety_concern_at_assessed_uses_impurity_controls",
+      "attention_flag": false,
+      "summary_it": "Nel parere EFSA del 2021, emendato nel 2022, non emergevano motivi di preoccupazione per gli impieghi valutati nelle formule per lattanti. EFSA chiedeva limiti più stringenti per contaminanti e impurità. Questo non conferma né smentisce automaticamente ogni studio successivo citato nel database originale, e non certifica il lotto commerciale.",
+      "hazard": {"description_it": "Controlli su metalli, esteri glicidilici, 3-MCPD e acido erucico; presenza nel prodotto non misura questi contaminanti.", "evidence_strength": "efsa_assessment_for_specified_uses_not_exhaustive_review_of_later_studies"},
+      "adi": null,
+      "sources": [{"title": "Follow-up re-evaluation of E471, including infants; amended 2022", "authority": "EFSA", "date": "2021-11-08", "type": "risk_assessment", "url": "https://doi.org/10.2903/j.efsa.2021.6885"}]
+    },
+    "E951": {
+      "name_it": "Aspartame",
+      "status": "iarc_2b_jecfa_adi_retained",
+      "attention_flag": true,
+      "summary_it": "Nel 2023 IARC ha classificato l'aspartame nel gruppo 2B, con evidenza limitata nell'uomo. JECFA ha contemporaneamente mantenuto la DGA di 0–40 mg/kg di peso corporeo al giorno. La classificazione di pericolo non indica la probabilità di ammalarsi consumando questo prodotto.",
+      "hazard": {"iarc_group": "2B", "description_it": "Possibile cancerogenicità: forza dell'evidenza, non misura del rischio alla dose assunta.", "evidence_strength": "limited_human_evidence"},
+      "adi": {"value": 40, "unit": "mg/kg body weight/day", "expressed_as": "aspartame", "scope": "JECFA ADI 0–40"},
+      "sources": [{"title": "Aspartame hazard and risk assessment results released", "authority": "WHO / IARC / JECFA", "date": "2023-07-14", "type": "hazard_and_risk_assessment_summary", "url": "https://www.who.int/news/item/14-07-2023-aspartame-hazard-and-risk-assessment-results-released"}]
+    }
+  }
+}
