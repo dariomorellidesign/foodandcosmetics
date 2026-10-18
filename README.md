@@ -43,7 +43,7 @@ python -m unittest discover -s tests
 python scripts/build_site.py --data-dir .build-data --output _site
 ```
 
-Solo libreria standard Python. Il generatore verifica hash, GTIN e unicità degli URL. GitHub Actions pubblica `_site` su Pages dopo il rilascio dei file. Nessuna credenziale, configurazione privata o backup dell'applicazione è incluso.
+Solo libreria standard Python. Il generatore verifica hash, GTIN e unicità degli URL. GitHub Actions pubblica `_site` da `main`, sui push o con avvio manuale, dopo che i file della release indicata nel manifest sono disponibili. Nessuna credenziale, configurazione privata o backup dell'applicazione è incluso.
 
 ## Attribuzione
 
