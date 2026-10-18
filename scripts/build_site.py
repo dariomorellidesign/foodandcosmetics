@@ -89,7 +89,8 @@ def projection(record, manifest, ingredients):
     }
     if record["type"] == "cosmetics":
         result["ingredient_details"] = [
-            {"id": key, **ingredients.get(key, {})} for key in data.get("ingredients", [])
+            {"id": key, **{k: v for k, v in ingredients.get(key, {}).items() if v is not None}}
+            for key in data.get("ingredients", [])
         ]
     else:
         result["warnings"].append(
@@ -125,7 +126,7 @@ def product_html(item, manifest):
             if codes
             else "<p>Elenco vuoto nella fonte; assenza non verificata.</p>"
         )
-        details = f'<h2>Valori nutrizionali della fonte</h2><p class="note">Valori nativi, senza conversioni. Le unità e la base di misura non sono state validate per ogni scheda. Non usarli come valori certificati per 100 g o come input di un nuovo punteggio.</p><p>Formato dichiarato: <code>{esc(data.get("nutritionFactsFormat"))}</code></p><table>{rows}</table><h2>Additivi riportati</h2>{inventory}<p>Gli identificativi della fonte, inclusi eventuali codici GEN, sono conservati senza attribuire loro automaticamente un rischio. Il testo completo degli ingredienti alimentari non è incluso.</p>'
+        details = f'<h2>Valori nutrizionali della fonte</h2><p class="note">Valori nelle unità native della fonte, non validate per ogni scheda. Nessuna conversione o nuovo punteggio; verificare la confezione.</p><p>Formato dichiarato: <code>{esc(data.get("nutritionFactsFormat"))}</code></p><table>{rows}</table><h2>Additivi riportati</h2>{inventory}<p>Codici della fonte, senza deduzioni sul rischio. Eventuali GEN restano non risolti. Il testo integrale degli ingredienti non è incluso.</p>'
     else:
         details = (
             "<h2>Ingredienti / INCI riportati</h2><ul>"
