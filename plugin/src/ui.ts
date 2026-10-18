@@ -117,11 +117,12 @@ function render(data:any){
   if(data.category)intro.append(el('p',`Categoria: ${data.category}`,'subtle'));
   if(data.reference)intro.append(el('p',`Rispetto a ${data.reference.name??data.reference.barcode} · voto ${display(data.reference.rating)}`));
   const products=data.products??[];
-  intro.append(el('p',data.view==='ranking'?`${display(data.eligible_products)} prodotti con voto utilizzabile su ${display(data.total_products)}. ${display(data.excluded_missing_or_unusable_rating)} esclusi.`:data.same_category===false?'Categorie diverse: il confronto non identifica automaticamente un vincitore.':'Dati della stessa istantanea, con provenienza e limiti espliciti.','subtle'));
+  intro.append(el('p',data.view==='ranking'?data.filter?`Ricerca su tutti i ${display(data.total_products)} prodotti della categoria.`:`${display(data.eligible_products)} prodotti con voto utilizzabile su ${display(data.total_products)}. ${display(data.excluded_missing_or_unusable_rating)} esclusi.`:data.same_category===false?'Categorie diverse: il confronto non identifica automaticamente un vincitore.':'Dati della stessa istantanea, con provenienza e limiti espliciti.','subtle'));
   root.append(intro);
   if(data.filter){
     const f=data.filter;intro.append(el('p',`${f.label}${f.exclude_additives?.length?' · esclusi '+f.exclude_additives.join(', '):''}`,'filter-label'));
-    intro.append(el('p',`${f.matched_products} corrispondenze nell’intera categoria; ${f.rankable_matches} ordinabili per voto. ${f.excluded_missing_rating_among_matches} senza voto utilizzabile. Esclusi dal filtro: ${Object.entries(f.excluded_by_reason).map(([k,v])=>`${k}: ${v}`).join(' · ')||'nessuno'}.`,'subtle'));
+    const reasons:Record<string,string>={unresolved_additives:'codici non riconosciuti',flagged_additives:'additivi segnalati',missing_inventory:'elenco non disponibile',listed_additives:'additivi elencati',explicit_exclusion:'codici esclusi dalla richiesta'};
+    intro.append(el('p',`${f.matched_products} corrispondenze; ${f.rankable_matches} ordinabili per voto. ${f.excluded_missing_rating_among_matches} senza voto utilizzabile. Esclusi dal filtro: ${Object.entries(f.excluded_by_reason).map(([k,v])=>`${reasons[k]??'altri motivi'}: ${v}`).join(' · ')||'nessuno'}.`,'subtle'));
     intro.append(el('p',f.caveat,'notice'));
   }
   if(!products.length)root.append(el('p',data.reason??'Nessun prodotto con voto strettamente maggiore trovato in questa categoria.','panel'));

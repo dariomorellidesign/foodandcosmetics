@@ -3,6 +3,7 @@ import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/
 import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
 import { z } from 'zod';
 import { Catalog, CatalogError, DEFAULT_CATALOG } from './catalog';
+import {coverage,KNOWLEDGE_VERSION} from './additive-knowledge';
 import reportHtml from '../dist/report.html';
 
 export interface Env { CATALOG_URL?: string }
@@ -34,6 +35,8 @@ export function createServer(catalog:Catalog) {
     const p=await catalog.product(a.barcode,a.kind);
     return {barcode:p.barcode,source:p.source,assessment:p.assessment,record_id:p.record_id,
       product_json:`${catalog.base}/data/${p.type}/${p.barcode.slice(0,3)}/${p.barcode.slice(3,5)}/${p.barcode}.json`,
+      ...(p.type==='food'?{additive_knowledge:{version:KNOWLEDGE_VERSION,coverage,
+        original_assessments:`${catalog.base}/reference/additive-source-assessments.json`,selected_primary_source_summaries:`${catalog.base}/reference/additive-evidence.json`}}:{}),
       manifest:`${catalog.base}/manifest.json`,image:p.image??null,warnings:p.warnings};
   });
   tool('list_categories','Trova ID categoria per classifiche. Cerca parole nel nome originale o nello slug, ad esempio yogurt; massimo 40 risultati.',{query:z.string().max(100).default(''),kind:z.enum(['food','cosmetics']).optional()},a=>catalog.categories(a.query,a.kind));
