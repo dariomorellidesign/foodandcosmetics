@@ -84,7 +84,7 @@ errors. Missing ratings and forbidden/unusable grades never become zero.
 
 ## Visual report
 
-The resource `ui://food-and-cosmetics/report-v1.html` uses the standard MCP Apps
+The resource `ui://food-and-cosmetics/report-v2.html` uses the standard MCP Apps
 MIME type `text/html;profile=mcp-app` and `_meta.ui.resourceUri`. It is bundled
 locally, requires no external scripts/fonts and only loads pictures from the
 catalog image host. Source strings are rendered with `textContent`; URLs are

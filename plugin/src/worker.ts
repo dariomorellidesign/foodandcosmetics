@@ -7,7 +7,7 @@ import {coverage,KNOWLEDGE_VERSION} from './additive-knowledge';
 import reportHtml from '../dist/report.html';
 
 export interface Env { CATALOG_URL?: string }
-const URI='ui://food-and-cosmetics/report-v1.html';
+const URI='ui://food-and-cosmetics/report-v2.html';
 const kind=z.enum(['food','cosmetics']).default('food');
 const barcode=z.string().min(8).max(14).describe('GTIN come stringa, conservando gli zeri iniziali.');
 const productInput={barcode,kind};
