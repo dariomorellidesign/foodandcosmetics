@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Food & Cosmetics static product data",
-    "version": "1.0",
-    "description": "Static JSON by barcode. Source-reported values, unverified nutrient units/basis. No MCP, live search or recomputed health score."
+    "version": "1.1",
+    "description": "Static product JSON, category indexes and source-reported ratings. Remote MCP and the visual report are documented separately in plugin/README.md. Native nutrient units/bases remain unverified."
   },
   "servers": [
     {
@@ -118,6 +118,72 @@
           },
           "404": {
             "description": "Record not published; static-host error may be HTML"
+          }
+        }
+      }
+    },
+    "/indexes/categories.json": {
+      "get": {
+        "operationId": "listCatalogCategories",
+        "summary": "Read exact source categories with product and usable-rating counts",
+        "responses": {
+          "200": {
+            "description": "Category index",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "categories"
+                  ],
+                  "properties": {
+                    "categories": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/indexes/{type}/{category}.json": {
+      "get": {
+        "operationId": "readCategoryRatingIndex",
+        "summary": "First 100 source-reported grades in each order, exclusions and versioned rules",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "type",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "food",
+                "cosmetics"
+              ]
+            }
+          },
+          {
+            "in": "path",
+            "name": "category",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]+$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deterministic source-rating/1.0.0 index with best/worst arrays"
+          },
+          "404": {
+            "description": "Category not in snapshot"
           }
         }
       }

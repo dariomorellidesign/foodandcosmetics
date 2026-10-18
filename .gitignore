@@ -5,3 +5,7 @@ _site/
 *.jsonl
 __pycache__/
 .env
+node_modules/
+dist/
+.wrangler/
+.dev.vars*

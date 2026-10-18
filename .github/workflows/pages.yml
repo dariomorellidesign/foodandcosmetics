@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     environment:
       name: github-pages
@@ -21,6 +21,21 @@ jobs:
       - uses: actions/checkout@v4
       - name: Test generator
         run: python3 -m unittest discover -s tests
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+          cache-dependency-path: plugin/pnpm-lock.yaml
+      - name: Test cloud MCP and build report
+        working-directory: plugin
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+          pnpm check
+          pnpm test
       - name: Download original uncompressed JSONL files
         env:
           GH_TOKEN: ${{ github.token }}

@@ -1,6 +1,8 @@
 import importlib.util
 import json
 import unittest
+import tempfile
+import hashlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -58,6 +60,48 @@ class ProductPublicationTests(unittest.TestCase):
         item = builder.projection(record, self.manifest, {})
         self.assertFalse(item["assessment"]["additive_absence_verified"])
         self.assertTrue(any("Empty additive" in value for value in item["warnings"]))
+
+    def test_picture_is_bound_to_record_id_and_not_untrusted_raw_url(self):
+        record={"type":"food","id":"abc123","barcode":"0000000000000","data":{"photo":"javascript:alert(1)"}}
+        item=builder.projection(record,self.manifest,{}, {"abc123":"jpg"})
+        self.assertEqual(item["image"]["url"],self.manifest["image_base_url"]+"/ab/abc123.jpg")
+        self.assertFalse(item["image"]["current_label_verified"])
+        self.assertNotIn('javascript:',builder.product_html(item,self.manifest))
+        self.assertNotIn("image",builder.projection(record,self.manifest,{}))
+        record["id"]="AbC123"
+        self.assertIn('/ab/AbC123.jpg',builder.projection(record,self.manifest,{}, {"AbC123":"jpg"})["image"]["url"])
+
+    def test_ranking_preserves_zero_excludes_missing_and_has_stable_ties(self):
+        self.assertEqual(builder.eligible_grade({"grade":0}),0)
+        for value in [None,True,"90",-1,101,float('nan')]:
+            self.assertIsNone(builder.eligible_grade({"grade":value}))
+        self.assertIsNone(builder.eligible_grade({"grade":90,"gradeForbidden":True}))
+        rows=[{"barcode":"3","rating":0},{"barcode":"2","rating":80},
+              {"barcode":"1","rating":80},{"barcode":"4","rating":None}]
+        index=builder.category_index("food","sample",rows)
+        self.assertEqual([x["barcode"] for x in index["best"]],["1","2","3"])
+        self.assertEqual([x["barcode"] for x in index["worst"]],["3","1","2"])
+        self.assertEqual(index["excluded_missing_or_unusable_rating"],1)
+        self.assertEqual(index,builder.category_index("food","sample",list(reversed(rows))))
+
+    def test_small_complete_site_has_no_home_examples_and_publishes_indexes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder=Path(tmp);manifest=dict(self.manifest);manifest["barcode_page_counts"]={"food":1,"cosmetics":1}
+            manifest["assets"]={k:dict(v) for k,v in self.manifest["assets"].items()}
+            for kind in ("food","cosmetics"):
+                name=kind+"-products.jsonl"
+                row={"type":kind,"id":"abc123","barcode":"0000000000000","barcode_check_digit_valid":1,
+                     "data":{"name":"Fixture","category":"fixture","grade":0,"ingredients":[],"additives":[]}}
+                raw=(json.dumps(row)+"\n").encode();(folder/name).write_bytes(raw)
+                manifest["assets"][name]["sha256"]=hashlib.sha256(raw).hexdigest()
+            mp=folder/"manifest.json";mp.write_text(json.dumps(manifest))
+            summary=builder.build(folder,folder/"site",mp)
+            home=(folder/"site/index.html").read_text(encoding="utf-8")
+            self.assertNotIn("Monster",home);self.assertNotIn("KoRo",home);self.assertNotIn("8015854330021",home)
+            self.assertNotIn("yuka",home.lower())
+            index=json.loads((folder/"site/indexes/food/fixture.json").read_text())
+            self.assertEqual(index["best"][0]["rating"],0)
+            self.assertEqual(summary["published_products"],{"food":1,"cosmetics":1})
 
 
 if __name__ == "__main__":

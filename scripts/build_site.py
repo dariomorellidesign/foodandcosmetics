@@ -6,9 +6,14 @@ import html
 import json
 import shutil
 from pathlib import Path
+from collections import defaultdict
+try:
+    from catalog_indexes import category_index, eligible_grade
+except ModuleNotFoundError:
+    from scripts.catalog_indexes import category_index, eligible_grade
 
 ROOT = Path(__file__).resolve().parents[1]
-STYLE = """body{font:17px/1.6 system-ui,sans-serif;max-width:960px;margin:40px auto;padding:0 20px;color:#18332c;background:#fafbf8}a{color:#075b45}header{border-bottom:1px solid #ccd8d0;padding-bottom:20px}h1{line-height:1.2;font-size:2.3rem}h2{margin-top:2rem}small,.muted{color:#53655d}.note{background:#f0f2e7;border-left:4px solid #8f9e58;padding:14px}table{border-collapse:collapse;width:100%}td,th{text-align:left;padding:9px;border-bottom:1px solid #dbe2db;vertical-align:top}code{overflow-wrap:anywhere}input,select,button{font:inherit;padding:10px;margin:5px 0}input{max-width:100%;box-sizing:border-box}button{background:#075b45;color:white;border:0;border-radius:4px}nav{display:flex;gap:20px;flex-wrap:wrap}footer{margin-top:40px;border-top:1px solid #ccd8d0;padding-top:20px}li{margin-bottom:6px}"""
+STYLE = """body{font:17px/1.6 system-ui,sans-serif;max-width:960px;margin:40px auto;padding:0 20px;color:#18332c;background:#fafbf8}a{color:#075b45}header{border-bottom:1px solid #ccd8d0;padding-bottom:20px}h1{line-height:1.2;font-size:2.3rem}h2{margin-top:2rem}small,.muted{color:#53655d}.note{background:#f0f2e7;border-left:4px solid #8f9e58;padding:14px}table{border-collapse:collapse;width:100%}td,th{text-align:left;padding:9px;border-bottom:1px solid #dbe2db;vertical-align:top}code{overflow-wrap:anywhere}input,select,button{font:inherit;padding:10px;margin:5px 0}input{max-width:100%;box-sizing:border-box}button{background:#075b45;color:white;border:0;border-radius:4px}nav{display:flex;gap:20px;flex-wrap:wrap}footer{margin-top:40px;border-top:1px solid #ccd8d0;padding-top:20px}li{margin-bottom:6px}.product-photo{float:right;margin:0 0 20px 24px;width:240px}.product-photo img{object-fit:contain;background:white;border-radius:12px}.product-photo figcaption{font-size:12px;color:#53655d}@media(max-width:600px){.product-photo{float:none;margin:16px 0}}"""
 NUTRIENTS = {
     "calories": "Energia (calories)",
     "fat": "Grassi (fat)",
@@ -61,19 +66,19 @@ def page(title, body, base, canonical, description="", structured=None, json_url
     alternate = (
         f'<link rel="alternate" type="application/json" href="{esc(json_url)}">' if json_url else ""
     )
-    return f'''<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc(title)} · Food &amp; Cosmetics</title><meta name="description" content="{esc(description)}"><meta name="robots" content="index,follow"><link rel="canonical" href="{esc(base + "/" + canonical)}">{alternate}<link rel="stylesheet" href="{esc(base)}/style.css">{ld}</head><body><header><a href="{esc(base)}/">Food &amp; Cosmetics</a><p class="muted">Catalogo di dati alimentari e cosmetici · fonte dichiarata · accesso HTML e JSON</p></header><main>{body}</main><footer><a href="{esc(base)}/about.html">Provenienza e limiti</a> · <a href="{esc(base)}/manifest.json">Manifest</a> · <a href="{esc(base)}/llms.txt">Accesso per AI</a><p><small>Progetto indipendente, non affiliato a Yuka. I dati descrivono un'istantanea della fonte; non sono una verifica della confezione attuale.</small></p></footer></body></html>'''
+    return f'''<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{esc(title)} · Food &amp; Cosmetics</title><meta name="description" content="{esc(description)}"><meta name="robots" content="index,follow"><link rel="canonical" href="{esc(base + "/" + canonical)}">{alternate}<link rel="stylesheet" href="{esc(base)}/style.css">{ld}</head><body><header><a href="{esc(base)}/">Food &amp; Cosmetics</a><p class="muted">Dati di prodotto · HTML e JSON</p></header><main>{body}</main><footer><a href="{esc(base)}/about.html">Provenienza e limiti</a> · <a href="{esc(base)}/manifest.json">Manifest</a> · <a href="{esc(base)}/llms.txt">Accesso per AI</a></footer></body></html>'''
 
 
-def projection(record, manifest, ingredients):
+def projection(record, manifest, ingredients, images=None):
     data = record["data"]
     result = {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "type": record["type"],
         "barcode": record["barcode"],
         "record_id": record["id"],
         "barcode_check_digit_valid": True,
         "source": {
-            "name": "Yuka offline Italian snapshot supplied by repository owner",
+            "name": manifest["source"],
             "snapshot_date": manifest["snapshot_date"],
             "record_updated_at": data.get("updated"),
             "original_sqlite_sha256": manifest["assets"]["products.sqlite"]["sha256"],
@@ -87,6 +92,13 @@ def projection(record, manifest, ingredients):
         },
         "warnings": [],
     }
+    image_ext = (images or {}).get(str(record["id"]))
+    identifier = str(record["id"])
+    if image_ext in ("jpg", "png", "gif", "webp") and identifier.isascii() and identifier.isalnum():
+        result["image"] = {
+            "url": manifest["image_base_url"] + "/" + identifier[:2].lower() + "/" + identifier + "." + image_ext,
+            "origin": "same_snapshot_product_id", "current_label_verified": False,
+        }
     if record["type"] == "cosmetics":
         result["ingredient_details"] = [
             {"id": key, **{k: v for k, v in ingredients.get(key, {}).items() if v is not None}}
@@ -94,13 +106,13 @@ def projection(record, manifest, ingredients):
         ]
     else:
         result["warnings"].append(
-            "Full ingredient label is not included in this offline food export"
+            "Full ingredient label unavailable"
         )
         if not data.get("additives"):
-            result["warnings"].append("Empty additive list does not establish additive absence")
+            result["warnings"].append("Empty additive list: absence unverified")
     if "\ufffd" in encode(data):
         result["warnings"].append(
-            "Source text contains replacement characters; no spelling guessed"
+            "Source text contains replacement characters"
         )
     return result
 
@@ -126,7 +138,7 @@ def product_html(item, manifest):
             if codes
             else "<p>Elenco vuoto nella fonte; assenza non verificata.</p>"
         )
-        details = f'<h2>Valori nutrizionali della fonte</h2><p class="note">Valori nelle unità native della fonte, non validate per ogni scheda. Nessuna conversione o nuovo punteggio; verificare la confezione.</p><p>Formato dichiarato: <code>{esc(data.get("nutritionFactsFormat"))}</code></p><table>{rows}</table><h2>Additivi riportati</h2>{inventory}<p>Codici della fonte, senza deduzioni sul rischio. Eventuali GEN restano non risolti. Il testo integrale degli ingredienti non è incluso.</p>'
+        details = f'<h2>Valori nutrizionali della fonte</h2><p class="note">Unità e basi native non validate; verificare la confezione. Nessun nuovo punteggio.</p><p>Formato dichiarato: <code>{esc(data.get("nutritionFactsFormat"))}</code></p><table>{rows}</table><h2>Additivi riportati</h2>{inventory}<p>Codici della fonte, senza deduzioni sul rischio. Eventuali GEN restano non risolti. Il testo integrale degli ingredienti non è incluso.</p>'
     else:
         details = (
             "<h2>Ingredienti / INCI riportati</h2><ul>"
@@ -137,7 +149,11 @@ def product_html(item, manifest):
             + "</ul><p>I nomi INCI sono collegati ai riferimenti della stessa istantanea. Identità mancanti restano identificate dal codice originale.</p>"
         )
     warn = "".join(f"<li>{esc(w)}</li>" for w in item["warnings"])
-    body = f'<h1>{esc(name)}</h1><p>{esc(brand)} · <strong>{esc(code)}</strong></p><nav><a href="{esc(base + "/" + jp)}">Leggi i dati JSON</a><a href="{esc(manifest["release_url"])}">Scarica il dataset completo</a></nav><p>Categoria della fonte: <code>{esc(data.get("category"))}</code></p><p>Ultimo aggiornamento dichiarato della scheda: {esc(data.get("updated"))}<br>Istantanea acquisita: {esc(manifest["snapshot_date"])}</p><p>Voto riportato da Yuka: <strong>{esc(data.get("grade")) if data.get("grade") is not None else "non disponibile"}</strong>. Non ricalcolato da questo sito e distinto da una nostra valutazione.</p>{details}<h2>Qualità e provenienza</h2><ul>{warn}<li>Confezione attuale non verificata. Nessuna valutazione individuale di dose, esposizione o rischio.</li></ul><p>Record: <code>{esc(item["record_id"])}</code><br>Fonte: Yuka, export offline italiano. Campi mancanti e testi della fonte sono preservati nel JSON.</p>'
+    picture = (
+        f'<figure class="product-photo"><img src="{esc(item["image"]["url"])}" alt="Foto della scheda: {esc(name)}" width="240" height="240" loading="lazy" referrerpolicy="no-referrer"><figcaption>Foto dell’istantanea.</figcaption></figure>'
+        if item.get("image") else '<p class="muted">Foto non disponibile nell’istantanea.</p>'
+    )
+    body = f'<h1>{esc(name)}</h1>{picture}<p>{esc(brand)} · <strong>{esc(code)}</strong></p><nav><a href="{esc(base + "/" + jp)}">Leggi i dati JSON</a><a href="{esc(manifest["release_url"])}">Scarica il dataset completo</a></nav><p>Categoria della fonte: <code>{esc(data.get("category"))}</code></p><p>Ultimo aggiornamento dichiarato della scheda: {esc(data.get("updated"))}<br>Istantanea acquisita: {esc(manifest["snapshot_date"])}</p><p>Voto riportato dalla fonte: <strong>{esc(data.get("grade")) if data.get("grade") is not None else "non disponibile"}</strong>. Non ricalcolato da questo sito e distinto da una nostra valutazione.</p>{details}<h2>Qualità e provenienza</h2><ul>{warn}<li>Confezione attuale non verificata. Nessuna valutazione individuale di dose, esposizione o rischio.</li></ul><p>Record: <code>{esc(item["record_id"])}</code><br>Fonte: istantanea offline italiana.</p>'
     structured = {
         "@context": "https://schema.org",
         "@type": "Product",
@@ -146,6 +162,8 @@ def product_html(item, manifest):
         "gtin" + str(len(code)): code,
         "url": base + "/" + hp,
     }
+    if item.get("image"):
+        structured["image"] = item["image"]["url"]
     if data.get("brand"):
         structured["brand"] = {"@type": "Brand", "name": data["brand"]}
     return page(
@@ -168,6 +186,9 @@ def write(output, relative, body):
 def build(data_dir, output, manifest_path=ROOT / "manifest.json"):
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     ingredients = json.loads((ROOT / "reference/ingredients.json").read_text(encoding="utf-8"))
+    images = json.loads((ROOT / "reference/images.json").read_text(encoding="utf-8"))
+    category_names = json.loads((ROOT / "reference/categories.json").read_text(encoding="utf-8"))
+    groups = defaultdict(list)
     base = manifest["site_url"]
     totals, excluded, urls, listings, seen = {}, {}, [], {}, set()
     for kind in ("food", "cosmetics"):
@@ -191,7 +212,7 @@ def build(data_dir, output, manifest_path=ROOT / "manifest.json"):
                 if (kind, code) in seen:
                     raise ValueError("Duplicate product route")
                 seen.add((kind, code))
-                item = projection(record, manifest, ingredients)
+                item = projection(record, manifest, ingredients, images)
                 hp, jp = paths(kind, code)
                 write(
                     output,
@@ -199,6 +220,15 @@ def build(data_dir, output, manifest_path=ROOT / "manifest.json"):
                     json.dumps(item, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False),
                 )
                 write(output, hp, product_html(item, manifest))
+                category = record["data"].get("category")
+                if isinstance(category, str) and category and all(c.isalnum() or c in "-_" for c in category) and category.isascii():
+                    groups[(kind, category)].append({
+                        "barcode": code, "name": record["data"].get("name"),
+                        "brand": record["data"].get("brand"),
+                        "rating": eligible_grade(record["data"]),
+                        "image_url": item.get("image", {}).get("url"),
+                        "url": base + "/" + hp,
+                    })
                 totals[kind] += 1
                 if totals[kind] % 10000 == 0:
                     print(f"Generated {kind}: {totals[kind]} HTML/JSON pairs", flush=True)
@@ -206,6 +236,15 @@ def build(data_dir, output, manifest_path=ROOT / "manifest.json"):
                 listings[kind].append(
                     (code, record["data"].get("name") or "Nome non disponibile", hp)
                 )
+    categories = []
+    for (kind, category), products in sorted(groups.items()):
+        index = category_index(kind, category, products)
+        write(output, f"indexes/{kind}/{category}.json", encode(index))
+        categories.append({"type": kind, "id": category, "name": category_names.get(category, category),
+                           "total_products": index["total_products"], "eligible_products": index["eligible_products"]})
+    write(output, "indexes/categories.json", encode({"schema_version": "1.0", "categories": categories}))
+    write(output, "reference/ingredients.json", encode(ingredients))
+    shutil.copyfile(ROOT / "reference/additives.json", output / "reference/additives.json")
     for kind, items in listings.items():
         items.sort()
         for offset in range(0, len(items), 1000):
@@ -230,8 +269,8 @@ def build(data_dir, output, manifest_path=ROOT / "manifest.json"):
                 ),
             )
             urls.append(base + "/" + route)
-    search = """<h2>Cerca per codice a barre</h2><form id="lookup"><label>Tipo <select id="kind"><option value="food">Alimento</option><option value="cosmetics">Cosmetico</option></select></label><br><label>Barcode <input id="barcode" inputmode="numeric" pattern="[0-9]{8,14}" required placeholder="8015854330021"></label> <button>Apri scheda</button><p id="error" role="status"></p></form><script>document.getElementById('lookup').onsubmit=function(e){e.preventDefault();const c=document.getElementById('barcode').value.trim(),k=document.getElementById('kind').value;if(![8,12,13,14].includes(c.length)||!/^[0-9]+$/.test(c)){document.getElementById('error').textContent='Inserisci un GTIN di 8, 12, 13 o 14 cifre.';return;}location.href='products/'+k+'/'+c.slice(0,3)+'/'+c.slice(3,5)+'/'+c+'.html';};</script>"""
-    home = f'<h1>Dati leggibili, prodotto per prodotto</h1><p>{totals["food"]:,} alimenti e {totals["cosmetics"]:,} cosmetici con GTIN valido. Schede HTML leggibili senza JavaScript e JSON direttamente accessibili.</p>{search}<nav><a href="catalog/food/1.html">Sfoglia alimenti</a><a href="catalog/cosmetics/1.html">Sfoglia cosmetici</a><a href="{manifest["release_url"]}">Download SQLite e JSONL non compressi</a></nav><h2>Esempi</h2><ul><li><a href="products/food/801/58/8015854330021.html">Monster Cake — 8015854330021</a></li><li><a href="products/food/425/55/4255582816532.html">KoRo — 4255582816532</a></li></ul><p class="note">Istantanea della fonte del {manifest["snapshot_date"]}. Dati non verificati sulla confezione attuale; nessun nuovo punteggio sanitario calcolato. Le unità nutrizionali native richiedono verifica. I dati mancanti restano mancanti.</p>'
+    search = """<h2>Cerca per codice a barre</h2><form id="lookup"><label>Tipo <select id="kind"><option value="food">Alimento</option><option value="cosmetics">Cosmetico</option></select></label><br><label>Barcode <input id="barcode" inputmode="numeric" pattern="[0-9]{8,14}" required placeholder="Inserisci il codice a barre"></label> <button>Apri scheda</button><p id="error" role="status"></p></form><script>document.getElementById('lookup').onsubmit=function(e){e.preventDefault();const c=document.getElementById('barcode').value.trim(),k=document.getElementById('kind').value;if(![8,12,13,14].includes(c.length)||!/^[0-9]+$/.test(c)){document.getElementById('error').textContent='Inserisci un GTIN di 8, 12, 13 o 14 cifre.';return;}location.href='products/'+k+'/'+c.slice(0,3)+'/'+c.slice(3,5)+'/'+c+'.html';};</script>"""
+    home = f'<h1>Dati leggibili, prodotto per prodotto</h1><p>{totals["food"]:,} alimenti e {totals["cosmetics"]:,} cosmetici con GTIN valido. Schede HTML leggibili senza JavaScript e JSON direttamente accessibili.</p>{search}<nav><a href="catalog/food/1.html">Sfoglia alimenti</a><a href="catalog/cosmetics/1.html">Sfoglia cosmetici</a><a href="{manifest["release_url"]}">Download SQLite e JSONL non compressi</a></nav><p class="note">Istantanea della fonte del {manifest["snapshot_date"]}. Dati non verificati sulla confezione attuale; nessun nuovo punteggio sanitario calcolato. Le unità nutrizionali native richiedono verifica. I dati mancanti restano mancanti.</p>'
     write(
         output,
         "index.html",
@@ -243,7 +282,7 @@ def build(data_dir, output, manifest_path=ROOT / "manifest.json"):
             "Schede alimenti e cosmetici per barcode, dati HTML e JSON, fonti e limiti espliciti.",
         ),
     )
-    about = "<h1>Provenienza e limiti</h1><p>Export dell’istantanea offline italiana Yuka fornito dal proprietario del repository, acquisito il 18 ottobre 2026. Progetto indipendente non affiliato a Yuka. Nomi, valutazioni e dati originali appartengono alle rispettive fonti; il sito non attribuisce una nuova licenza aperta ai dati di terzi.</p><p>Le schede HTML/JSON comprendono i record con GTIN valido. Le righe escluse per barcode mancante/non valido restano negli archivi originali della release. Le immagini non sono pubblicate. L’export alimentare non contiene il testo integrale degli ingredienti; gli elenchi vuoti non dimostrano assenza. I valori nutrizionali restano nei campi e nelle unità native non validate, senza conversioni. I voti sono riportati dalla fonte e non ricalcolati. INCI e nomi sono collegati tramite gli identificativi originali.</p><p>La data della scheda può essere precedente alla data dell’istantanea. I testi possono contenere caratteri sostitutivi già presenti nella fonte: non vengono inventate correzioni. Questo servizio statico non è un MCP remoto e non offre un motore di ricerca per nome.</p>"
+    about = "<h1>Provenienza e limiti</h1><p>Export dell’istantanea offline italiana fornito dal proprietario del repository, acquisito il 18 ottobre 2026. Progetto indipendente. Nomi, valutazioni e dati originali appartengono alle rispettive fonti; il sito non attribuisce una nuova licenza aperta ai dati di terzi.</p><p>Le schede HTML/JSON comprendono i record con GTIN valido. Le righe escluse per barcode mancante/non valido restano negli archivi originali della release. Le foto disponibili sono collegate tramite l’identificativo originale e ospitate separatamente; non certificano la confezione attuale. L’export alimentare non contiene il testo integrale degli ingredienti; gli elenchi vuoti non dimostrano assenza. I valori nutrizionali restano nei campi e nelle unità native non validate, senza conversioni. I voti sono riportati dalla fonte e non ricalcolati. INCI e nomi sono collegati tramite gli identificativi originali.</p><p>La data della scheda può essere precedente alla data dell’istantanea. I testi possono contenere caratteri sostitutivi già presenti nella fonte: non vengono inventate correzioni. Questo servizio statico non è un MCP remoto e non offre un motore di ricerca per nome.</p>"
     write(output, "about.html", page("Provenienza e limiti", about, base, "about.html"))
     write(
         output,
@@ -280,7 +319,7 @@ def build(data_dir, output, manifest_path=ROOT / "manifest.json"):
     write(
         output,
         "llms.txt",
-        f"# Food & Cosmetics\n\nPublic static product reference snapshot. Not affiliated with Yuka.\n\n- HTML: {base}/products/{{type}}/{{barcode[0:3]}}/{{barcode[3:5]}}/{{barcode}}.html\n- JSON: {base}/data/{{type}}/{{barcode[0:3]}}/{{barcode[3:5]}}/{{barcode}}.json\n- Types: food, cosmetics. Preserve barcode strings and leading zeros.\n- OpenAPI: {base}/openapi.json\n- Manifest: {base}/manifest.json\n- Source-native units/bases unverified. No new risk score. Missing values are not zero or proof of absence. Source-reported grades are not recomputed.\n- Full noncompressed datasets: {manifest['release_url']}\n",
+        f"# Food & Cosmetics\n\nPublic static product reference snapshot.\n\n- HTML: {base}/products/{{type}}/{{barcode[0:3]}}/{{barcode[3:5]}}/{{barcode}}.html\n- JSON: {base}/data/{{type}}/{{barcode[0:3]}}/{{barcode[3:5]}}/{{barcode}}.json\n- Types: food, cosmetics. Preserve barcode strings and leading zeros.\n- OpenAPI: {base}/openapi.json\n- Manifest: {base}/manifest.json\n- Source-native units/bases unverified. No new risk score. Missing values are not zero or proof of absence. Source-reported grades are not recomputed.\n- Full noncompressed datasets: {manifest['release_url']}\n",
     )
     write(output, ".nojekyll", "")
     output.mkdir(parents=True, exist_ok=True)
