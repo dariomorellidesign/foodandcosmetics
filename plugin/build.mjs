@@ -1,0 +1,10 @@
+import {build} from 'esbuild';
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+await mkdir('dist',{recursive:true});
+const ui=await build({entryPoints:['src/ui.ts'],bundle:true,minify:true,format:'iife',platform:'browser',write:false});
+const css=await readFile('ui.css','utf8');
+const script=ui.outputFiles[0].text.replace(/<\/script/gi,'<\\/script');
+await writeFile('dist/report.html',`<!doctype html><html lang="it"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Food & Cosmetics · Report</title><style>${css}</style><body><p id="status" role="status">Preparo il report…</p><main id="report"></main><script>${script}</script></body></html>`);
+await build({entryPoints:['src/worker.ts'],outfile:'dist/worker.mjs',bundle:true,format:'esm',platform:'neutral',mainFields:['module','main'],target:'es2022',loader:{'.html':'text'},external:['node:*']});
+await build({entryPoints:['src/catalog.ts'],outfile:'dist/catalog.mjs',bundle:true,format:'esm',platform:'node',target:'es2022'});
+console.log('Report e servizio MCP compilati.');

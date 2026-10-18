@@ -1,0 +1,7 @@
+allowBuilds:
+  '@modelcontextprotocol/ext-apps': false
+  esbuild: true
+  workerd: true
+autoInstallPeers: false
+minimumReleaseAgeExclude:
+  - '@cloudflare/workers-types@5.20261018.1'

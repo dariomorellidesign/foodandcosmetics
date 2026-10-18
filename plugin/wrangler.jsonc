@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "food-and-cosmetics-mcp",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-10-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "rules": [{"type":"Text","globs":["**/*.html"],"fallthrough":true}],
+  "vars": {
+    "CATALOG_URL": "https://dariomorellidesign.github.io/foodandcosmetics"
+  },
+  "build": {"command": "node build.mjs"},
+  "observability": {"enabled": false}
+}
