@@ -1,0 +1,7 @@
+_site/
+.build-data/
+*.sqlite
+*.sqlite-*
+*.jsonl
+__pycache__/
+.env

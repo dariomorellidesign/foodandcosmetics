@@ -1,0 +1,38 @@
+name: Publish readable product catalog
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test generator
+        run: python3 -m unittest discover -s tests
+      - name: Download original uncompressed JSONL files
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p .build-data
+          gh release download v2026.10.18 --repo "$GITHUB_REPOSITORY" --pattern '*-products.jsonl' --dir .build-data
+      - name: Generate HTML and JSON pages
+        run: python3 scripts/build_site.py --data-dir .build-data --output _site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5

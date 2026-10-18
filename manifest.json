@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "name": "Food & Cosmetics",
+  "site_url": "https://dariomorellidesign.github.io/foodandcosmetics",
+  "repository_url": "https://github.com/dariomorellidesign/foodandcosmetics",
+  "release_url": "https://github.com/dariomorellidesign/foodandcosmetics/releases/tag/v2026.10.18",
+  "snapshot_date": "2026-10-18",
+  "source": "Yuka offline Italian snapshot supplied by repository owner",
+  "source_record_counts": {
+    "food": 100291,
+    "cosmetics": 40679
+  },
+  "barcode_page_counts": {
+    "food": 99458,
+    "cosmetics": 40341
+  },
+  "assets": {
+    "products.sqlite": {
+      "bytes": 190156800,
+      "sha256": "4f73c47409f0141010fa1cc0e99915cbc4abd91c191303cfffa944b3147eb01a",
+      "media_type": "application/vnd.sqlite3",
+      "url": "https://github.com/dariomorellidesign/foodandcosmetics/releases/download/v2026.10.18/products.sqlite"
+    },
+    "food-products.jsonl": {
+      "bytes": 88379397,
+      "sha256": "321a12e1f67a90b3c2028b9194cdc92f92d69890d430ea778757854454a8aafb",
+      "media_type": "application/x-ndjson",
+      "url": "https://github.com/dariomorellidesign/foodandcosmetics/releases/download/v2026.10.18/food-products.jsonl"
+    },
+    "cosmetics-products.jsonl": {
+      "bytes": 31102440,
+      "sha256": "208098ce76d2591f784ef8a5bca867f1f4784beaf8b805d53e2c31613eba8642",
+      "media_type": "application/x-ndjson",
+      "url": "https://github.com/dariomorellidesign/foodandcosmetics/releases/download/v2026.10.18/cosmetics-products.jsonl"
+    }
+  },
+  "images_included": false,
+  "independently_label_verified": false,
+  "nutrition_units": "source-native, not independently verified",
+  "ratings": "reported by source, not recomputed",
+  "rights": "Third-party data; no new open-data license is granted by this repository"
+}

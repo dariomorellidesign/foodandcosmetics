@@ -1,0 +1,126 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Food & Cosmetics static product data",
+    "version": "1.0",
+    "description": "Static JSON by barcode. Source-reported values, unverified nutrient units/basis. No MCP, live search or recomputed health score."
+  },
+  "servers": [
+    {
+      "url": "https://dariomorellidesign.github.io/foodandcosmetics"
+    }
+  ],
+  "paths": {
+    "/data/{type}/{prefix3}/{prefix2}/{barcode}.json": {
+      "get": {
+        "operationId": "lookupProductSnapshot",
+        "summary": "Read a source-reported product snapshot",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "type",
+            "required": true,
+            "description": "Product kind",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "food",
+                "cosmetics"
+              ]
+            }
+          },
+          {
+            "in": "path",
+            "name": "prefix3",
+            "required": true,
+            "description": "First three barcode digits",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{3}$"
+            }
+          },
+          {
+            "in": "path",
+            "name": "prefix2",
+            "required": true,
+            "description": "Barcode digits at positions 4 and 5",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{2}$"
+            }
+          },
+          {
+            "in": "path",
+            "name": "barcode",
+            "required": true,
+            "description": "Full valid GTIN string preserving leading zeros",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{8,14}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Product with provenance; native units unverified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "schema_version",
+                    "type",
+                    "barcode",
+                    "record_id",
+                    "source",
+                    "data",
+                    "assessment",
+                    "warnings"
+                  ],
+                  "properties": {
+                    "schema_version": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "barcode": {
+                      "type": "string"
+                    },
+                    "record_id": {
+                      "type": "string"
+                    },
+                    "source": {
+                      "type": "object"
+                    },
+                    "data": {
+                      "type": "object"
+                    },
+                    "assessment": {
+                      "type": "object"
+                    },
+                    "warnings": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "ingredient_details": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Record not published; static-host error may be HTML"
+          }
+        }
+      }
+    }
+  }
+}
